@@ -54,7 +54,8 @@ _request_times: Dict[str, deque] = defaultdict(deque)
 # Lightweight edge protection. Use a managed gateway/WAF for internet-facing deployments.
 @app.middleware("http")
 async def security_middleware(request: Request, call_next):
-    if request.url.path.startswith("/api/") and request.url.path != "/api/health":
+    # CORS preflight requests must reach CORSMiddleware without API-key checks.
+    if request.method != "OPTIONS" and request.url.path.startswith("/api/") and request.url.path != "/api/health":
         if ENVIRONMENT == "production" and not API_KEY:
             return JSONResponse({"detail": "API_KEY is required in production"}, status_code=503)
         if API_KEY and request.headers.get("X-API-Key") != API_KEY:
